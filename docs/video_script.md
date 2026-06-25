@@ -1,37 +1,31 @@
-# 3-Minute Video Script
+# Сценарий видео на 4 человека
 
-## 0:00-0:20. Problem and Business Value
+Ниже сценарий уже разложен по ролям и таймингу так, чтобы уложиться в 3 минуты и закрыть все пункты из задания.
 
-Hello. Our project is about fraud detection in online transactions for a bank or payment provider.
+## Участник 1 — 0:00-0:20
 
-The problem is that traditional rule-based antifraud systems are too coarse. They often block normal users and still miss sophisticated fraud. Our goal is to predict suspicious transactions earlier, reduce fraud losses, and make manual review more efficient.
+“Мы решаем задачу антифрода для банка или платежного сервиса. Проблема в том, что простые правила часто либо пропускают мошенничество, либо блокируют честных клиентов. Наша цель — предсказывать риск мошенничества по онлайн-транзакции, чтобы снижать потери и уменьшать нагрузку на ручную проверку.”
 
-## 0:20-0:50. Data and Architecture
+## Участник 2 — 0:20-0:50
 
-We use the public IEEE-CIS Fraud Detection dataset. It contains transaction features and identity-related information such as device and account signals.
+“Мы используем публичный датасет IEEE-CIS Fraud Detection, который состоит из транзакционной и identity-таблицы. Мы объединяем их по `TransactionID`, затем строим признаки из суммы, времени, карточных полей, адресов, email-доменов и device-информации. Дополнительно мы делаем frequency encoding, агрегаты по сущностям и признаки пропусков.”
 
-Our pipeline consists of four stages: data merging, preprocessing, feature engineering, and model inference. We combine transaction amount, card and address information, email domains, device signals, and time-derived features into a unified training table.
+## Участник 3 — 0:50-1:20
 
-## 0:50-1:50. Technical Implementation and Demo
+“В пайплайне у нас есть baseline на `LogisticRegression` и основная модель на `LightGBM`. Это позволяет показать, что улучшение качества достигается не только выбором модели, но и качественным feature engineering. После обучения мы сохраняем модель, метрики, feature importance и таблицу ошибок на валидации.”
 
-First, we build a baseline model. Then we improve it with additional feature engineering and a gradient boosting model.
+## Участник 4 — 1:20-1:50
 
-Important engineered features include transformed transaction amount, frequency-based encodings, time-related signals, and indicators of rare or missing identity attributes.
+“Здесь мы показываем demo. На вход подаются параметры новой транзакции, после чего модель рассчитывает вероятность мошенничества и выдает одно из трёх решений: `approve`, `review` или `block`. Такой интерфейс можно использовать как часть antifraud-прототипа для операционной команды.”
 
-Here we show the prototype. A new transaction is passed to the model, and the system outputs a fraud probability together with an operational decision: approve, send to manual review, or block. We also display the main factors that influenced the prediction.
+## Участник 3 — 1:50-2:20
 
-## 1:50-2:20. Quality, Errors, and Risks
+“Поскольку классы несбалансированы, мы оцениваем модель не по accuracy, а по `PR-AUC`, `ROC-AUC`, а также по precision и recall на рабочем пороге. Мы отдельно анализируем false positives и false negatives. Это важно, потому что в антифроде ошибка первого рода раздражает честных клиентов, а ошибка второго рода ведет к прямым потерям.”
 
-Since fraud is a rare event, accuracy is not informative. We focus on PR-AUC, ROC-AUC, and recall at a selected threshold.
+## Участник 2 — 2:20-2:40
 
-We also analyze model errors. False positives happen when legitimate user behavior looks unusual. False negatives happen when fraudulent transactions resemble normal ones.
+“С точки зрения продакшна мы учитываем `data drift`, `concept drift`, изменение паттернов мошенников и неполноту identity-данных. В мониторинге нужно отслеживать долю алертов, точность ручной очереди, распределения ключевых признаков и стабильность fraud score.”
 
-In production, the main risks are data drift, concept drift, incomplete identity information, and excessive false alarms.
+## Участник 1 — 2:40-3:00
 
-## 2:20-3:00. Conclusion
-
-Our main result is that machine learning on transaction and identity features can provide a practical fraud risk score for fintech operations.
-
-The limitations of the project are that we use a public dataset and a simplified offline setup. The next step would be online scoring, richer entity-level aggregation, and continuous monitoring in production.
-
-Thank you. Our team members and their contributions are shown on the final slide.
+“Итог проекта в том, что ML-модель на транзакционных и identity-признаках может давать практичный fraud score для финтех-задачи. Ограничение проекта — публичный датасет и offline-режим. Следующий шаг — подключение реальных данных, online scoring и более глубокая entity-level аналитика. Спасибо.”

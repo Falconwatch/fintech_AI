@@ -1,50 +1,90 @@
-# IEEE-CIS Fraud Detection Project
+# Антифрод-проект на IEEE-CIS Fraud Detection
 
-## Project Idea
+## Что это за проект
 
-This repository contains a team project for the NES course assignment on AI in fintech.
+Это командный проект под задание РЭШ по теме AI в финтехе.
 
-We solve a real fintech problem: **fraud detection in online transactions** using machine learning on the public **IEEE-CIS Fraud Detection** dataset.
+Мы решаем задачу **выявления мошеннических онлайн-транзакций** для банка или платежного сервиса. Модель получает признаки транзакции и связанные identity/device-сигналы, после чего оценивает риск мошенничества и предлагает одно из решений:
 
-The business goal is to help a bank or payment provider detect suspicious transactions earlier, reduce fraud losses, and lower the burden on manual review teams.
+- `approve`;
+- `review`;
+- `block`.
 
-## Problem Statement
+Проект специально собран так, чтобы закрывать требования задания:
 
-Traditional rule-based antifraud systems often produce too many false positives and miss more complex fraud patterns.
+- есть бизнес-постановка;
+- есть воспроизводимый ML-пайплайн;
+- есть baseline и основная модель;
+- есть анализ ошибок и продакшн-риски;
+- есть demo для видео;
+- есть документы для защиты.
 
-We build an ML pipeline that predicts whether a transaction is fraudulent using:
+## Бизнес-постановка
 
-- transaction features;
-- identity and device-related features;
-- feature engineering based on behavior, frequency, and rarity signals.
+Проблема антифрода в том, что простые правила часто работают слишком грубо:
 
-## Dataset
+- честные клиенты попадают в лишние блокировки;
+- сложные мошеннические сценарии остаются незамеченными;
+- команда ручной проверки получает слишком много слабых алертов.
 
-Main dataset: **IEEE-CIS Fraud Detection**
+Мы используем ML, чтобы комбинировать множество сигналов сразу и получать более точный fraud score по каждой транзакции.
 
-- Competition page: https://www.kaggle.com/competitions/ieee-fraud-detection
-- Main files:
+## Данные
+
+Основной датасет: **IEEE-CIS Fraud Detection**
+
+- Страница соревнования: [Kaggle IEEE-CIS Fraud Detection](https://www.kaggle.com/competitions/ieee-fraud-detection)
+- Основные файлы:
   - `train_transaction.csv`
   - `train_identity.csv`
 
-These files are joined by `TransactionID`.
+Таблицы объединяются по `TransactionID`.
 
-## Repository Structure
+## Что реализовано в коде
+
+### Обучение
+
+- загрузка и merge исходных таблиц;
+- feature engineering;
+- baseline на `LogisticRegression`;
+- основная модель на `LightGBM`;
+- выбор порога по валидации;
+- расчёт метрик;
+- сохранение артефактов модели.
+
+### Артефакты после обучения
+
+После запуска пайплайна сохраняются:
+
+- `models/fraud_model.joblib` — основная модель;
+- `models/baseline_model.joblib` — baseline;
+- `outputs/metrics/metrics.json` — метрики;
+- `outputs/metrics/feature_importance.csv` — важность признаков;
+- `outputs/predictions/validation_predictions.csv` — предсказания и ошибки на валидации.
+
+### Demo
+
+`streamlit`-интерфейс подключен к сохранённой модели и позволяет показать в видео:
+
+- ввод параметров транзакции;
+- вероятность мошенничества;
+- решение `approve / review / block`.
+
+## Структура репозитория
 
 ```text
 fintech_AI/
 ├── data/
 │   ├── raw/
-│   └── processed/
+│   └── mock/
 ├── docs/
 │   ├── one_pager.md
 │   ├── slides_outline.md
+│   ├── submission_checklist.md
 │   └── video_script.md
 ├── models/
 ├── notebooks/
 ├── outputs/
-│   ├── figures/
-│   └── metrics/
 ├── src/
 │   ├── app/
 │   ├── data/
@@ -55,127 +95,124 @@ fintech_AI/
 └── readme.md
 ```
 
-## Planned Pipeline
+## Пайплайн признаков
 
-1. Load `train_transaction.csv` and `train_identity.csv`.
-2. Merge them on `TransactionID`.
-3. Clean missing values and prepare categorical features.
-4. Train a simple baseline model.
-5. Add feature engineering.
-6. Train an improved model.
-7. Evaluate model quality and analyze errors.
-8. Build a small demo for inference.
+В проекте используются:
 
-## Suggested Models
+- транзакционные признаки: `TransactionAmt`, `TransactionDT`, `ProductCD`, `card*`, `addr*`, `dist*`;
+- email-признаки: `P_emaildomain`, `R_emaildomain`;
+- поведенческие и агрегатные признаки: `C*`, `D*`, `M*`;
+- identity/device-признаки: `DeviceType`, `DeviceInfo`, `id_*`;
+- часть `V*`-признаков с наименьшей долей пропусков.
 
-- Baseline: `LogisticRegression`
-- Main model: `LightGBM`
+### Feature engineering
 
-This setup makes it easy to show improvement from simple linear modeling to a more practical tabular fraud detection model.
+Реализованы:
 
-## Recommended Features
+- `log(TransactionAmt)`;
+- признаки часа, дня и недели из `TransactionDT`;
+- `EmailDomainMatch`;
+- `MissingValueCount`;
+- frequency encoding для `card1`, `card2`, `card3`, `card5`, `addr1`, `addr2`, `P_emaildomain`, `R_emaildomain`, `DeviceInfo`;
+- агрегаты по сущностям: число транзакций и средняя сумма для `card1`, `addr1`, `DeviceInfo`, `P_emaildomain`;
+- индикаторы наличия device-информации.
 
-### Transaction Features
+## Метрики
 
-- `TransactionAmt`
-- `ProductCD`
-- `card1-card6`
-- `addr1`, `addr2`
-- `dist1`, `dist2`
-- `P_emaildomain`, `R_emaildomain`
-- `C1-C14`
-- `D1-D15`
-- `M1-M9`
+Так как задача антифрода сильно несбалансирована, акцент сделан не на accuracy, а на:
 
-### Identity Features
+- `ROC-AUC`;
+- `PR-AUC`;
+- `precision_at_threshold`;
+- `recall_at_threshold`;
+- `f1_at_threshold`;
+- `precision_top_5pct`;
+- `recall_top_5pct`;
+- `alert_rate`.
 
-- `DeviceType`
-- `DeviceInfo`
-- `id_12-id_38`
+Также формируется таблица ошибок с false positives и false negatives.
 
-## Feature Engineering Ideas
+## Как запустить
 
-- `log(TransactionAmt)`
-- frequency encoding for `card`, `addr`, `emaildomain`, `DeviceInfo`
-- whether payer and recipient email domains match
-- count of transactions per device or card
-- average transaction amount by `card1` or `addr1`
-- relative time features derived from `TransactionDT`
-- missingness indicators for important columns
+### 1. Установить зависимости
 
-## Metrics
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-For fraud detection, we should not rely on accuracy because classes are highly imbalanced.
+### 2. Положить реальные данные IEEE-CIS
 
-Primary metrics:
+Нужно скачать с Kaggle и поместить в `data/raw/`:
 
-- ROC-AUC
-- PR-AUC
-- Recall at fixed precision
-- Confusion matrix at selected threshold
+```text
+data/raw/train_transaction.csv
+data/raw/train_identity.csv
+```
 
-## Error Analysis
+### 3. Обучить модель на реальных данных
 
-We plan to examine:
+```bash
+python -m src.models.train --data-dir data/raw --output-dir outputs
+```
 
-- false positives: legitimate transactions incorrectly flagged as fraud;
-- false negatives: fraudulent transactions missed by the model.
+### 4. Быстрый smoke test без Kaggle-данных
 
-This is important for the assignment because the project must show model limitations and production risks.
+Сначала можно сгенерировать совместимый mock-датасет:
 
-## Risks and Monitoring
+```bash
+python -m src.data.generate_mock_data --output-dir data/mock --rows 5000
+python -m src.models.train --data-dir data/mock --output-dir outputs/mock_run
+```
 
-Production considerations to discuss in the final presentation:
+### 5. Запустить demo
 
-- data drift;
-- concept drift;
-- increased false positive rate;
-- missing identity data;
-- explainability and regulatory constraints.
+```bash
+streamlit run src/app/demo.py
+```
 
-Suggested monitoring:
+## Что проверено
 
-- flagged transaction rate;
-- fraud capture rate;
-- precision of manual review queue;
-- drift in top features;
-- score distribution stability.
+В этом репозитории пайплайн уже доведён до состояния, где его можно прогнать end-to-end на mock-данных. Это позволяет проверить:
 
-## Demo Idea
+- генерацию совместимого датасета;
+- обучение baseline и LightGBM;
+- сохранение модели;
+- расчёт метрик;
+- запуск demo с подключённой моделью.
 
-A simple demo app can be built with `streamlit`.
+Для финального результата под сдачу нужно отдельно прогнать тот же сценарий уже на настоящих Kaggle-данных IEEE-CIS.
 
-Input:
+## Документы для защиты
 
-- transaction amount;
-- product code;
-- card and device-related fields;
-- email domains;
-- address features.
+В папке [docs](/Users/igor/Repositories/fintech_AI/docs) уже лежат:
 
-Output:
+- [one_pager.md](/Users/igor/Repositories/fintech_AI/docs/one_pager.md) — краткое описание проекта;
+- [video_script.md](/Users/igor/Repositories/fintech_AI/docs/video_script.md) — сценарий ролика на 4 участников;
+- [slides_outline.md](/Users/igor/Repositories/fintech_AI/docs/slides_outline.md) — структура презентации;
+- [submission_checklist.md](/Users/igor/Repositories/fintech_AI/docs/submission_checklist.md) — чеклист перед сдачей.
 
-- fraud probability;
-- decision label: `approve`, `review`, or `block`;
-- top factors affecting the prediction.
+## Роли в команде
 
-## Team Deliverables
+Рекомендуемое распределение:
 
-According to the assignment, we should prepare:
+- Участник 1: бизнес-постановка, экономика эффекта, вступление и вывод.
+- Участник 2: данные, признаки, архитектура, риски данных.
+- Участник 3: модели, метрики, анализ ошибок.
+- Участник 4: demo, интерфейс, сборка презентации и видео.
 
-- a video up to 3 minutes;
-- repository with working code and launch instructions;
-- one-page project description;
-- pinned dependency versions;
-- project authors and contribution split.
+## Ограничения проекта
 
-## Run Plan
+- В репозитории нет самих Kaggle-данных, их нужно скачать отдельно.
+- Итоговые метрики на реальном IEEE-CIS появятся только после локального запуска обучения на `data/raw/`.
+- Demo сейчас показывает реальные предсказания только после того, как сохранена `models/fraud_model.joblib`.
 
-After data download, the first implementation steps should be:
+## Что ещё нужно сделать перед финальной записью видео
 
-1. Place Kaggle files into `data/raw/`.
-2. Create an EDA notebook.
-3. Build the first merged training table.
-4. Train a baseline model.
-5. Add feature engineering and compare metrics.
-6. Prepare charts and screenshots for the video.
+1. Скачать реальные данные с Kaggle.
+2. Прогнать обучение на `data/raw/`.
+3. Зафиксировать итоговые метрики из `outputs/metrics/metrics.json`.
+4. Выбрать 1 false positive и 1 false negative из `validation_predictions.csv`.
+5. Снять demo-экран.
+6. Собрать слайды по структуре из `docs/slides_outline.md`.

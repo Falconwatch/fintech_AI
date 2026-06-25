@@ -1,27 +1,49 @@
+from pathlib import Path
+
 import streamlit as st
 
+from src.models.predict import load_bundle, predict_payload
 
-st.set_page_config(page_title="Fraud Detection Demo", layout="centered")
 
-st.title("Fraud Detection Demo")
-st.write("Starter UI for the IEEE-CIS antifraud project.")
+st.set_page_config(page_title="Антифрод demo", layout="centered")
 
-amount = st.number_input("Transaction amount", min_value=0.0, value=100.0)
-product = st.selectbox("Product code", ["W", "C", "R", "H", "S"])
-device_type = st.selectbox("Device type", ["desktop", "mobile", "missing"])
-email_match = st.selectbox("Email domains match", ["yes", "no", "unknown"])
+st.title("Антифрод demo по IEEE-CIS")
+st.write("Интерфейс для показа предсказания обученной модели на одной транзакции.")
 
-if st.button("Predict"):
-    heuristic_score = min(
-        0.95,
-        0.15 + amount / 5000 + (0.1 if device_type == "missing" else 0.0),
+model_path = Path("models/fraud_model.joblib")
+if not model_path.exists():
+    st.warning(
+        "Обученная модель пока не найдена. Сначала запустите `python -m src.models.train --data-dir data/raw`."
     )
-    st.metric("Fraud probability", f"{heuristic_score:.2%}")
-    if heuristic_score >= 0.75:
-        st.write("Decision: `block`")
-    elif heuristic_score >= 0.40:
-        st.write("Decision: `review`")
-    else:
-        st.write("Decision: `approve`")
+    st.stop()
 
-    st.write("Prototype note: this screen is a placeholder until the trained model is connected.")
+bundle = load_bundle(model_path)
+
+with st.form("prediction_form"):
+    amount = st.number_input("Сумма транзакции", min_value=0.0, value=120.0)
+    product = st.selectbox("ProductCD", ["W", "C", "R", "H", "S"])
+    card1 = st.number_input("card1", min_value=0.0, value=1500.0)
+    addr1 = st.number_input("addr1", min_value=0.0, value=315.0)
+    p_email = st.text_input("P_emaildomain", value="gmail.com")
+    r_email = st.text_input("R_emaildomain", value="gmail.com")
+    device_type = st.selectbox("DeviceType", ["desktop", "mobile", "missing"])
+    device_info = st.text_input("DeviceInfo", value="Windows")
+    submitted = st.form_submit_button("Предсказать")
+
+if submitted:
+    payload = {
+        "TransactionAmt": amount,
+        "ProductCD": product,
+        "card1": card1,
+        "addr1": addr1,
+        "P_emaildomain": p_email,
+        "R_emaildomain": r_email,
+        "DeviceType": device_type,
+        "DeviceInfo": device_info,
+    }
+    result = predict_payload(payload, bundle)
+    st.metric("Вероятность мошенничества", f"{result['fraud_probability']:.2%}")
+    st.write(f"Решение системы: `{result['decision']}`")
+    st.caption(
+        "Для финального видео можно дополнить экран текстом про порог, ручную проверку и топ-факторы риска."
+    )

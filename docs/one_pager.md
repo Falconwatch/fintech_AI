@@ -1,72 +1,97 @@
-# One-Page Project Description
+# Краткое описание проекта
 
-## Project Title
+## Название проекта
 
-**Fraud detection in online transactions using machine learning on the IEEE-CIS dataset**
+**Антифрод для онлайн-транзакций на датасете IEEE-CIS Fraud Detection**
 
-## Task
+## Задача
 
-We solve the problem of detecting fraudulent online transactions for a bank or payment provider. The goal is to identify suspicious operations before they are approved, reduce direct fraud losses, and decrease the number of unnecessary manual reviews.
+Мы решаем задачу выявления мошеннических онлайн-транзакций для банка или платежного сервиса. Цель — заранее выделять подозрительные операции, снижать прямые потери от мошенничества и уменьшать нагрузку на команду ручной проверки.
 
-## Why This Matters
+## Бизнес-ценность
 
-Traditional rule-based antifraud systems are often too rigid: they either miss complex fraud patterns or block too many legitimate users. Machine learning makes it possible to combine many weak signals at once and estimate fraud risk more accurately.
+Классические эвристики в антифроде часто слишком грубые: они либо пропускают сложные мошеннические сценарии, либо создают много ложных блокировок для честных клиентов. ML-модель позволяет учитывать сразу множество сигналов и давать риск-скор по каждой транзакции.
 
-## Data
+Ожидаемый прикладной эффект:
 
-We use the public **IEEE-CIS Fraud Detection** dataset, which includes transaction-level and identity-related features. The dataset contains information about transaction amount, product category, card features, address fields, email domains, device-related signals, and anonymized behavioral variables.
+- снижение fraud loss за счёт более раннего выявления риска;
+- сокращение доли ложных ручных проверок;
+- более прицельная работа antifraud-команды.
 
-The project uses two main files:
+## Данные
 
-- `train_transaction.csv`
-- `train_identity.csv`
+Мы используем публичный датасет **IEEE-CIS Fraud Detection**. Он состоит из двух таблиц:
 
-They are merged by `TransactionID`.
+- `train_transaction.csv` — транзакционные признаки;
+- `train_identity.csv` — identity- и device-признаки.
 
-## Model
+Таблицы объединяются по `TransactionID`.
 
-We compare two approaches:
+Среди используемых сигналов:
 
-- a baseline model with limited preprocessing;
-- an improved gradient boosting model with additional feature engineering.
+- сумма и время транзакции;
+- карточные и адресные признаки;
+- email-домены;
+- device-признаки;
+- анонимизированные поведенческие фичи.
 
-Key feature engineering ideas:
+## Модель и пайплайн
 
-- amount transformation;
-- frequency encoding for high-cardinality categories;
-- time-based features from `TransactionDT`;
-- rarity and count statistics for cards, devices, and domains;
-- missingness indicators and simple interaction signals.
+В проекте реализованы:
 
-## Metrics
+- baseline-модель `LogisticRegression`;
+- основная модель `LightGBM`.
 
-Because fraud detection is a highly imbalanced classification problem, we focus on:
+Пайплайн включает:
 
-- PR-AUC;
-- ROC-AUC;
-- recall at a business-relevant operating threshold.
+1. загрузку и merge таблиц;
+2. обработку пропусков;
+3. feature engineering;
+4. обучение baseline и основной модели;
+5. выбор рабочего порога;
+6. оценку качества и сохранение артефактов;
+7. demo-инференс для одной транзакции.
 
-We also analyze false positives and false negatives to understand where the model fails.
+Ключевые engineered features:
 
-## Risks and Production View
+- `log(TransactionAmt)`;
+- признаки времени из `TransactionDT`;
+- frequency encoding для high-cardinality сущностей;
+- агрегаты по `card1`, `addr1`, `DeviceInfo`, `P_emaildomain`;
+- индикаторы пропусков и совпадения email-доменов.
 
-We discuss how the model would behave in production and what should be monitored:
+## Метрики
 
-- data drift and concept drift;
-- changes in fraud tactics;
-- rising false positive rate;
-- incomplete identity information;
-- explainability and regulatory concerns.
+Так как задача сильно несбалансирована, основной акцент сделан не на accuracy, а на:
 
-## Expected Result
+- `PR-AUC`;
+- `ROC-AUC`;
+- `precision` и `recall` на выбранном пороге;
+- `precision_top_5pct` и `recall_top_5pct` для верхней части risk queue.
 
-We expect the improved model to outperform the baseline and show that transaction and identity signals together can provide a useful fraud risk score for prioritizing suspicious operations.
+Также отдельно сохраняются false positives и false negatives для анализа ошибок.
 
-## Team Contributions
+## Риски и мониторинг
 
-Recommended split:
+Для продакшн-сценария мы учитываем:
 
-- business framing and storytelling;
-- EDA and feature engineering;
-- modeling and evaluation;
-- demo, slides, and video assembly.
+- `data drift`;
+- `concept drift`;
+- рост ложных блокировок;
+- неполноту identity-данных;
+- необходимость объяснимости и контроля качества.
+
+Мониторинг в проде:
+
+- доля алертов;
+- точность ручной очереди;
+- распределения ключевых признаков;
+- стабильность fraud score;
+- доля подтвержденного фрода по сегментам.
+
+## Состав команды и вклад
+
+- Участник 1: бизнес-постановка, экономика эффекта, финальная подача.
+- Участник 2: данные, EDA, feature engineering.
+- Участник 3: обучение моделей, метрики, анализ ошибок.
+- Участник 4: demo, презентация, монтаж и сборка видео.

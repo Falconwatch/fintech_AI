@@ -1,65 +1,82 @@
-# Slide Outline
+# Структура презентации
 
-## Slide 1. Title
+## Слайд 1. Титульный
 
-- Project name
-- Team members
-- Short subtitle: fraud detection in online transactions
+- название проекта;
+- состав команды;
+- короткий подзаголовок: антифрод для онлайн-транзакций.
 
-## Slide 2. Business Problem
+## Слайд 2. Бизнес-задача
 
-- who needs the solution;
-- what pain point exists;
-- expected business effect.
+- кто заказчик;
+- какая боль;
+- почему одних эвристик недостаточно;
+- ожидаемый бизнес-эффект.
 
-## Slide 3. Data
+## Слайд 3. Данные
 
-- IEEE-CIS dataset;
-- transaction and identity tables;
-- what signals are available.
+- IEEE-CIS Fraud Detection;
+- transaction + identity;
+- какие типы сигналов используем.
 
-## Slide 4. Pipeline
+## Слайд 4. Архитектура пайплайна
 
+- загрузка;
 - merge;
 - preprocessing;
 - feature engineering;
-- model;
-- output score.
-
-## Slide 5. Models
-
 - baseline;
-- improved model;
-- why boosting is appropriate for tabular fraud data.
+- LightGBM;
+- score и решение.
 
-## Slide 6. Metrics
+## Слайд 5. Feature engineering
 
-- ROC-AUC;
-- PR-AUC;
-- threshold-based recall/precision;
-- why accuracy is weak here.
+- логарифм суммы;
+- временные признаки;
+- frequency encoding;
+- entity-level агрегаты;
+- признаки пропусков.
 
-## Slide 7. Error Analysis
+## Слайд 6. Техническая реализация
 
-- false positives example;
-- false negatives example;
-- likely causes.
+- структура репозитория;
+- train script;
+- сохранение модели и артефактов;
+- demo на `streamlit`.
 
-## Slide 8. Risks and Monitoring
+## Слайд 7. Метрики
 
-- data drift;
-- concept drift;
-- false positive growth;
-- production monitoring plan.
+- `ROC-AUC`;
+- `PR-AUC`;
+- precision/recall на пороге;
+- почему accuracy здесь слабая.
 
-## Slide 9. Demo
+## Слайд 8. Анализ ошибок
 
-- input transaction;
-- fraud score;
-- operational decision.
+- пример false positive;
+- пример false negative;
+- гипотезы, почему модель ошиблась.
 
-## Slide 10. Final Takeaway
+## Слайд 9. Риски и мониторинг
 
-- result;
-- limitations;
-- next steps.
+- `data drift`;
+- `concept drift`;
+- атаки и адаптация мошенников;
+- план мониторинга и реакции.
+
+## Слайд 10. Demo
+
+- входные поля;
+- fraud probability;
+- решение `approve / review / block`.
+
+## Слайд 11. Итоги
+
+- ключевой результат;
+- ограничения;
+- следующие шаги.
+
+## Слайд 12. Команда
+
+- кто что делал;
+- кто говорит в каком блоке видео.
