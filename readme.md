@@ -151,11 +151,37 @@ data/raw/train_transaction.csv
 data/raw/train_identity.csv
 ```
 
-### 3. Обучить модель на реальных данных
+### 3. Обучить модель одной командой
 
 ```bash
-python -m src.models.train --data-dir data/raw --output-dir outputs
+./train_model.sh
 ```
+
+Во время обучения в терминал выводятся пошаговые логи:
+
+- загрузка данных;
+- разбиение на train/validation;
+- построение признаков;
+- обучение baseline;
+- обучение LightGBM;
+- сохранение метрик, моделей и таблицы ошибок.
+
+После завершения скрипт:
+
+- печатает качественное summary по метрикам;
+- спрашивает `Обновить метрики в отчёте? [y/N]`;
+- при положительном ответе автоматически обновляет [docs/submission/one_pager.md](/Users/igor/Repositories/fintech_AI/docs/submission/one_pager.md).
+
+Если хочешь просто посмотреть итоговые числа без открытия JSON, достаточно дождаться финального summary в консоли.
+
+Скрипт по умолчанию использует стандартные пути:
+
+- входные данные: `data/raw/train_transaction.csv`
+- входные данные: `data/raw/train_identity.csv`
+- метрики: `outputs/metrics/metrics.json`
+- ошибки на валидации: `outputs/predictions/validation_predictions.csv`
+
+Если в `data/raw` нет нужных файлов, скрипт завершится с понятным сообщением и подскажет, что именно нужно положить в эту папку.
 
 ### 4. Быстрый smoke test без Kaggle-данных
 
@@ -186,21 +212,23 @@ streamlit run src/app/demo.py
 
 ## Документы для защиты
 
-В папке [docs](/Users/igor/Repositories/fintech_AI/docs) уже лежат:
+В папке [docs](/Users/igor/Repositories/fintech_AI/docs) документы разделены на две группы:
 
-- [one_pager.md](/Users/igor/Repositories/fintech_AI/docs/one_pager.md) — краткое описание проекта;
-- [video_script.md](/Users/igor/Repositories/fintech_AI/docs/video_script.md) — сценарий ролика на 4 участников;
-- [slides_outline.md](/Users/igor/Repositories/fintech_AI/docs/slides_outline.md) — структура презентации;
-- [submission_checklist.md](/Users/igor/Repositories/fintech_AI/docs/submission_checklist.md) — чеклист перед сдачей.
+- [docs/submission/one_pager.md](/Users/igor/Repositories/fintech_AI/docs/submission/one_pager.md) — краткое описание проекта;
+- [docs/submission/model_training_report.md](/Users/igor/Repositories/fintech_AI/docs/submission/model_training_report.md) — подробный отчёт по модели;
+- [docs/submission/authors_and_contributions.md](/Users/igor/Repositories/fintech_AI/docs/submission/authors_and_contributions.md) — состав команды и вклад;
+- [docs/internal/video_script.md](/Users/igor/Repositories/fintech_AI/docs/internal/video_script.md) — сценарий ролика на 3 участников;
+- [docs/internal/slides_outline.md](/Users/igor/Repositories/fintech_AI/docs/internal/slides_outline.md) — структура презентации;
+- [docs/internal/submission_checklist.md](/Users/igor/Repositories/fintech_AI/docs/internal/submission_checklist.md) — чеклист перед сдачей;
+- [docs/internal/deliverables_overview.md](/Users/igor/Repositories/fintech_AI/docs/internal/deliverables_overview.md) — карта всех артефактов.
 
 ## Роли в команде
 
 Рекомендуемое распределение:
 
-- Участник 1: бизнес-постановка, экономика эффекта, вступление и вывод.
+- Участник 1: бизнес-постановка, экономика эффекта, demo, вступление и вывод.
 - Участник 2: данные, признаки, архитектура, риски данных.
-- Участник 3: модели, метрики, анализ ошибок.
-- Участник 4: demo, интерфейс, сборка презентации и видео.
+- Участник 3: модели, метрики, анализ ошибок, интерфейс и сборка презентации.
 
 ## Ограничения проекта
 
@@ -215,4 +243,4 @@ streamlit run src/app/demo.py
 3. Зафиксировать итоговые метрики из `outputs/metrics/metrics.json`.
 4. Выбрать 1 false positive и 1 false negative из `validation_predictions.csv`.
 5. Снять demo-экран.
-6. Собрать слайды по структуре из `docs/slides_outline.md`.
+6. Собрать слайды по структуре из `docs/internal/slides_outline.md`.
